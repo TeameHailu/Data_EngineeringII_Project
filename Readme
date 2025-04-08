@@ -1,0 +1,9 @@
+This project covers contextualization and orchestration for distributed applications. The assignment
+consists of three tasks.
+Task 1: covers basic introduction of the Docker environment.
+Task 2: requires a reasonably firm understanding of the Docker environment, Dockerfile settings and construction of a multi-container
+environment using docker-compose (one of the essential tools to build, connect
+and run multiple containers).
+Task 3: is a theoretical task that requires a literature survey of different orchestration and contextualization frameworks, theoretical
+understanding of their architectures and reflection on gains and challenges related
+to the frameworks.
