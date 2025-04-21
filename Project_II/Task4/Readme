@@ -1,0 +1,19 @@
+Task 4: Splitting and merging operations with
+Apache Pulsar
+In this task, we are going to demonstrate how apache pulsar can be used for splitting and
+merging of operations. 
+Conversion.py file which demonstrates a code that has a
+“conversion” operation applied to each word on a string. Here we assume that the operation can
+only be applied on a single word instead of the entire string. Based on this premise, you are
+required to complete the following sub-tasks:
+1. Identify an issue with the current implementation in terms of handling big data i.e., words
+are in the order of millions.
+2. Redesign the current implementation by using apache pulsar to demonstrate splitting
+and merging of data i.e., how the same operation on each word (i.e., splitting) and the
+resultant string (i.e., merging) can be handled by consumers and producers. Provide a
+diagram to demonstrate how your architecture will look like i.e.,
+a. How data splitting and merging is handled by consumer and producer
+b. Label broker, consumer and producer.
+3. Provide an implementation (preferably in Python programming language) of your
+architecture with Apache Pulsar. You can set up your architecture on a single virtual
+machine by creating different sessions for each consumer and producer.
