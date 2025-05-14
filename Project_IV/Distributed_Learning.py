@@ -1,52 +1,95 @@
 import ray
+import numpy as np
+import time
 from ray import tune
+from ray.air import session
 from sklearn.datasets import fetch_covtype
-from sklearn.utils import resample
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 
-# Load the dataset
-X, y = fetch_covtype(return_X_y=True)
-X,y = resample(X, y, n_samples=10000, random_state=42)
-# Split the dataset (optional but cleaner)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+# Load and preprocess data
+data = fetch_covtype()
+X, y = data.data, data.target
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
 
-# Define the trainable function for Ray Tune
-def train_rf(config):
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42
+)
+
+# Put datasets in Ray object store
+X_train_id = ray.put(X_train)
+y_train_id = ray.put(y_train)
+
+# Baseline model
+baseline_model = RandomForestClassifier(random_state=42)
+baseline_model.fit(X_train, y_train)
+baseline_score = accuracy_score(y_test, baseline_model.predict(X_test))
+print(f"✅ Baseline accuracy: {baseline_score:.4f}")
+
+
+# Ray Tune trainable function (reads from object store)
+def rf_trainable(config):
+    X_t = ray.get(X_train_id)
+    y_t = ray.get(y_train_id)
+
     model = RandomForestClassifier(
         max_depth=config["max_depth"],
         n_estimators=config["n_estimators"],
         ccp_alpha=config["ccp_alpha"],
+        random_state=42,
         n_jobs=1
     )
-    score = cross_val_score(model, X_train, y_train, cv=2).mean()
-    tune.report(mean_accuracy=score)
 
-# Initialize Ray
-ray.init(address="auto", ignore_reinit_error=True)
+    score = cross_val_score(model, X_t, y_t, cv=3).mean()
+    session.report({"mean_accuracy": score})
 
-# Define hyperparameter search space
+
+# Search space
 search_space = {
-    "max_depth": tune.grid_search([10, 15]),
+    "max_depth": tune.grid_search([10, 20, 30]),
     "n_estimators": tune.grid_search([50, 100]),
-    "ccp_alpha": tune.grid_search([0.0, 0.01])
+    "ccp_alpha": tune.grid_search([0.0, 0.01, 0.1]),
 }
 
-# Run Ray Tune with grid search
-tuner = tune.Tuner(
-    train_rf,
-    param_space=search_space,
-    tune_config=tune.TuneConfig(
-        metric="mean_accuracy",
-        mode="max",
-max_concurrent_trails=2
+if __name__ == "__main__":
+    ray.init(address="auto", ignore_reinit_error=True)
+
+    start = time.time()
+    tuner = tune.Tuner(
+        rf_trainable,
+        param_space=search_space,
+        run_config=tune.RunConfig(
+            name="rf_tuning",
+            storage_path="file:///home/ubuntu/Data_EngineeringII_Project/Project_IV/ray_results",
+            verbose=1
+        ),
+        tune_config=tune.TuneConfig(
+            metric="mean_accuracy",
+            mode="max",
+            reuse_actors=True
+        )
     )
-)
 
-results = tuner.fit()
+    results = tuner.fit()
+    end = time.time()
+    print(f"⏱️ Tuning time: {end - start:.2f} seconds")
 
-# Get best result
-best_result = results.get_best_result(metric="mean_accuracy", mode="max")
-print("Best hyperparameters found were: ", best_result.config)
-print("Best CV accuracy: ", best_result.metrics["mean_accuracy"])
+    # Evaluate best model
+    best_result = results.get_best_result(metric="mean_accuracy", mode="max")
+    best_config = best_result.config
+    print("🎯 Best hyperparameters:", best_config)
+
+    final_model = RandomForestClassifier(
+        max_depth=best_config["max_depth"],
+        n_estimators=best_config["n_estimators"],
+        ccp_alpha=best_config["ccp_alpha"],
+        random_state=42
+    )
+    final_model.fit(X_train, y_train)
+    final_score = accuracy_score(y_test, final_model.predict(X_test))
+    print(f"✅ Final accuracy after tuning: {final_score:.4f}")
+

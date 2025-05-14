@@ -1,0 +1,2 @@
+mean_accuracy,timestamp,checkpoint_dir_name,done,training_iteration,trial_id,date,time_this_iter_s,time_total_s,pid,hostname,node_ip,time_since_restore,iterations_since_restore
+0.48759813170559657,1747256195,,False,1,2272a_00017,2025-05-14_20-56-35,860.3967022895813,860.3967022895813,35971,teame-worker2,192.168.2.232,860.3967022895813,1

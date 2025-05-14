@@ -1,0 +1,13 @@
+Failure # 1 (occurred at 2025-05-14_17-53-46)
+[36mray::ImplicitFunc.train()[39m (pid=32067, ip=192.168.2.232, actor_id=cdadb7ee929254b4a52e4e7609000000, repr=train_model)
+  File "/usr/local/lib/python3.10/dist-packages/ray/tune/trainable/trainable.py", line 330, in train
+    raise skipped from exception_cause(skipped)
+  File "/usr/local/lib/python3.10/dist-packages/ray/air/_internal/util.py", line 107, in run
+    self._ret = self._target(*self._args, **self._kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/ray/tune/trainable/function_trainable.py", line 45, in <lambda>
+    training_func=lambda: self._trainable_func(self.config),
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/ray/tune/trainable/function_trainable.py", line 261, in _trainable_func
+  File "/home/ubuntu/Data_EngineeringII_Project/Project_IV/Distributed_Learning.py", line 45, in train_model
+  File "/usr/local/lib/python3.10/dist-packages/ray/train/_internal/session.py", line 663, in wrapper
+    return fn(*args, **kwargs)
+TypeError: report() got an unexpected keyword argument 'mean_accuracy'
